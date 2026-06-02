@@ -6,6 +6,8 @@ from typing import Optional
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from urllib.parse import quote as url_quote
+from urllib.parse import urlparse as url_parse
 
 logger = logging.getLogger("gitbeam")
 
@@ -38,21 +40,21 @@ class GitHubClient:
     # -- public methods --------------------------------------------------
 
     def get_user_info(self, username: str) -> Optional[dict]:
-        """GET /users/{username}"""
-        return self._request("GET", f"/users/{username}")
+        quoted = url_quote(username, safe="")
+        return self._request("GET", f"/users/{quoted}")
 
     def get_repos(self, username: str) -> Optional[list]:
-        """GET /users/{username}/repos?sort=stars&direction=desc&per_page=100"""
-        path = f"/users/{username}/repos?sort=stars&direction=desc&per_page=100"
+        quoted = url_quote(username, safe="")
+        path = f"/users/{quoted}/repos?sort=stars&direction=desc&per_page=100"
         return self._request("GET", path)
 
     def get_events(self, username: str) -> Optional[list]:
-        """GET /users/{username}/events?per_page=10"""
-        return self._request("GET", f"/users/{username}/events?per_page=10")
+        quoted = url_quote(username, safe="")
+        return self._request("GET", f"/users/{quoted}/events?per_page=10")
 
     def get_followers(self, username: str) -> Optional[list]:
-        """GET /users/{username}/followers?per_page=100"""
-        return self._request("GET", f"/users/{username}/followers?per_page=100")
+        quoted = url_quote(username, safe="")
+        return self._request("GET", f"/users/{quoted}/followers?per_page=100")
 
     def validate_token(self) -> bool:
         """Validate the stored token via GET /rate_limit."""
@@ -97,8 +99,14 @@ class GitHubClient:
         return headers
 
     def _request(self, method: str, path: str) -> Optional[dict]:
-        """Execute request, return JSON or None."""
         url = f"{self._base_url}{path}"
+
+        # Verify the final URL still points to api.github.com (SSRF guard)
+        parsed = url_parse(url)
+        if parsed.hostname not in ("api.github.com", "127.0.0.1", "localhost"):
+            logger.error("Blocked request to unexpected host: %s", parsed.hostname)
+            return None
+
         try:
             resp = self._session.request(
                 method,
