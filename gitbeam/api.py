@@ -60,6 +60,18 @@ def get_repos(username: str, token: Optional[str] = None) -> Optional[list]:
     return _handle_response(resp, context=f"repos for '{username}'")
 
 
+def get_events(username: str, token: Optional[str] = None) -> Optional[list]:
+    """Fetch recent public events for a user."""
+    url = f"{API_BASE}/users/{username}/events?per_page=10"
+    headers = _build_headers(token)
+    try:
+        resp = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.RequestException as e:
+        logger.error("Network error: %s", e)
+        return None
+    return _handle_response(resp, context=f"events for '{username}'")
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------

@@ -49,6 +49,24 @@ def display_repos(repos: list) -> None:
     console.print()
 
 
+def display_events(events: list) -> None:
+    """Display recent events as a Rich table."""
+    table = Table(title="Recent Events", show_edge=False, padding=(0, 1))
+    table.add_column("Type", style="bold yellow", width=18)
+    table.add_column("Repo", style="cyan")
+    table.add_column("Details")
+
+    for event in events[:10]:
+        etype = event.get("type", "").replace("Event", "")
+        repo_name = event.get("repo", {}).get("name", "—")
+        detail = _event_detail(event)
+        table.add_row(etype, repo_name, detail)
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
 def print_error(message: str) -> None:
     """Print an error message to stderr via Rich (styled red)."""
     console.print(message, style="red")
@@ -57,3 +75,36 @@ def print_error(message: str) -> None:
 def print_success(message: str) -> None:
     """Print a success message via Rich (styled green)."""
     console.print(message, style="green")
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _event_detail(event: dict) -> str:
+    """Extract a human-readable detail from an event payload."""
+    payload = event.get("payload", {})
+    etype = event.get("type", "")
+
+    if etype == "PushEvent":
+        commits = payload.get("commits", [])
+        return f"{len(commits)} commit(s)"
+    elif etype == "IssuesEvent":
+        action = payload.get("action", "")
+        title = payload.get("issue", {}).get("title", "")
+        return f"{action}: {title[:50]}"
+    elif etype == "PullRequestEvent":
+        action = payload.get("action", "")
+        title = payload.get("pull_request", {}).get("title", "")
+        return f"{action}: {title[:50]}"
+    elif etype == "ForkEvent":
+        forkee = payload.get("forkee", {}).get("full_name", "")
+        return f"forked to {forkee}"
+    elif etype == "WatchEvent":
+        return "starred"
+    elif etype == "CreateEvent":
+        ref_type = payload.get("ref_type", "")
+        ref = payload.get("ref", "")
+        return f"{ref_type}: {ref}" if ref else ref_type
+    else:
+        return "—"

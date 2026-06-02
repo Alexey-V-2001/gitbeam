@@ -66,3 +66,24 @@ def cmd_repos(username: str, no_cache: bool = False) -> None:
 
     cache.set_cached(f"repos:{username}", repos)
     display.display_repos(repos)
+
+
+def cmd_events(username: str, no_cache: bool = False) -> None:
+    """Handle 'events' subcommand."""
+    token = auth.get_token()
+
+    if no_cache:
+        cache.clear_cache_for(f"events:{username}")
+
+    cached_data = cache.get_cached(f"events:{username}")
+    if cached_data:
+        display.display_events(cached_data)
+        return
+
+    logger.info("Fetching events for '%s'...", username)
+    events = api.get_events(username, token)
+    if events is None:
+        sys.exit(1)
+
+    cache.set_cached(f"events:{username}", events)
+    display.display_events(events)
