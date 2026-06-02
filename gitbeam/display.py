@@ -28,7 +28,7 @@ def display_user(data: dict) -> None:
 
 def display_repos(repos: list) -> None:
     """Display top repositories as a Rich table."""
-    table = Table(title="Top Repositories", show_edge=False, padding=(0, 1))
+    table = Table(title="Top Repositories", padding=(0, 1))
     table.add_column("#", style="dim", width=3, justify="right")
     table.add_column("Name", style="bold cyan")
     table.add_column("Stars", justify="right")
@@ -51,6 +51,10 @@ def display_repos(repos: list) -> None:
 
 def display_events(events: list) -> None:
     """Display recent events as a Rich table."""
+    if not events:
+        console.print("No events found.", style="dim")
+        return
+    
     table = Table(title="Recent Events", padding=(0, 1))
     table.add_column("Type", style="bold yellow", width=18)
     table.add_column("Repo", style="cyan")

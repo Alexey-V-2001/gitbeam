@@ -4,13 +4,14 @@ A CLI tool to inspect GitHub user profiles — fast, secure, terminal-first.
 
 ## Features
 
-- 👤 Fetch and display any GitHub user profile
-- 🎨 Rich terminal output with colors and layout
-- 🔑 Optional token via `GITHUB_TOKEN` for higher rate limits
-- 💾 Local JSON cache with 5-minute TTL
-- 🛡️ Full error handling with friendly messages
-- ⚡ `--no-cache` flag to force fresh data
-- ✓ `auth status` command to verify your token
+- User profile with bio, company, location, stats
+- Top repositories sorted by stars
+- Recent public events (pushes, PRs, issues, forks)
+- Followers list
+- Token authentication via `GITHUB_TOKEN` for higher rate limits
+- JSON cache with 5-minute TTL
+- Full error handling and rate limit awareness
+- Rate limit status logged on every request
 
 ## Installation
 
@@ -26,51 +27,72 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-# Basic lookup (anonymous — 60 req/hour)
-python gitbeam.py torvalds
-
-# Force refresh, bypass cache
-python gitbeam.py torvalds --no-cache
-
-# Check your token
-python gitbeam.py auth status
+python gitbeam.py <username>              # user profile
+python gitbeam.py <username> repos        # top 5 repositories
+python gitbeam.py <username> events       # 10 most recent events
+python gitbeam.py <username> followers    # followers list
+python gitbeam.py auth status             # check token
+python gitbeam.py <username> --no-cache   # bypass cache
 ```
 
-### With a personal access token
+### Authentication
 
 Create a token at [https://github.com/settings/tokens](https://github.com/settings/tokens)
-(with **no scopes** — public data only).
+(no scopes needed for public data).
 
 ```bash
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-python gitbeam.py octocat
 ```
 
-With a valid token, the rate limit increases to **5000 requests/hour**.
+## Examples
 
-## Example
+### Profile
 
 ```
-$ python gitbeam.py octocat
+────────────────── The Octocat  —  @octocat ──────────────────
+ Bio:               │ —                          
+ Company:           │ @github                    
+ Location:          │ San Francisco              
+ Public repos:      │ 8                          
+ Followers:         │ 22755                      
+ Profile:           │ https://github.com/octocat 
+──────────────────────────────────────────────────────────────
+```
 
-02:29:03 [INFO] 🔓 No token set — operating anonymously (60 req/hour).
-02:29:03 [INFO] 🔍 Fetching data for 'octocat'...
+### Repositories
 
-───────────────── 👤 The Octocat  —  @octocat ──────────────────
- 📝 Bio:            │ —                          
- 🏢 Company:        │ @github                    
- 📍 Location:       │ San Francisco              
- 📦 Public repos:   │ 8                          
- 👥 Followers:      │ 22755                      
- 🔗 Profile:        │ https://github.com/octocat 
-────────────────────────────────────────────────────────────────
+```
+                                    Top Repositories                                    
+┏━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   # ┃ Name               ┃ Stars ┃ Language ┃ Description                            ┃
+┡━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│   1 │ boysenberry-repo-1 │   446 │ —        │ Testing                                │
+│   2 │ linguist           │   720 │ Ruby     │ Language Savant. If your repository's  │
+│     │                    │       │          │ language is being repo                 │
+│   3 │ test-repo1         │   454 │ —        │ —                                      │
+│   4 │ hello-worId        │   745 │ —        │ My first repository on GitHub.         │
+│   5 │ git-consortium     │   574 │ —        │ This repo is for demonstration         │
+│     │                    │       │          │ purposes only.                         │
+└─────┴────────────────────┴───────┴──────────┴────────────────────────────────────────┘
+```
 
+### Followers
+
+```
+                     Followers (showing 100)                     
+┏━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃    # ┃ Login            ┃ Profile                             ┃
+┡━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│    1 │ alice            │ https://github.com/alice            │
+│    2 │ bob              │ https://github.com/bob              │
+│  ... │ ...              │ https://github.com/...              │
+└──────┴──────────────────┴─────────────────────────────────────┘
 ```
 
 ## Requirements
 
-- Python 3.10 or newer
-- See `requirements.txt` for Python dependencies
+- Python 3.10+
+- Dependencies: `requests`, `rich`
 
 ## License
 
