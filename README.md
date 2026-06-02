@@ -1,7 +1,16 @@
 # gitbeam
 
-A simple CLI tool to fetch and display GitHub user profile information
-directly in your terminal.
+A CLI tool to inspect GitHub user profiles — fast, secure, terminal-first.
+
+## Features
+
+- 👤 Fetch and display any GitHub user profile
+- 🎨 Rich terminal output with colors and layout
+- 🔑 Optional token via `GITHUB_TOKEN` for higher rate limits
+- 💾 Local JSON cache with 5-minute TTL
+- 🛡️ Full error handling with friendly messages
+- ⚡ `--no-cache` flag to force fresh data
+- ✓ `auth status` command to verify your token
 
 ## Installation
 
@@ -17,31 +26,51 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python gitbeam.py <username>
+# Basic lookup (anonymous — 60 req/hour)
+python gitbeam.py torvalds
+
+# Force refresh, bypass cache
+python gitbeam.py torvalds --no-cache
+
+# Check your token
+python gitbeam.py auth status
 ```
 
-### Example
+### With a personal access token
+
+Create a token at [https://github.com/settings/tokens](https://github.com/settings/tokens)
+(with **no scopes** — public data only).
 
 ```bash
-$ python gitbeam.py octocat
-🔍 Fetching data for 'octocat'...
+export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+python gitbeam.py octocat
+```
 
-========================================
-  👤 The Octocat
-  @octocat
-========================================
- 📝 Bio:              │ —             
- 🏢 Company:          │ @github       
- 📍 Location:         │ San Francisco 
- 📦 Public repos:     │ 8             
- 👥 Followers:        │ 22755         
-========================================
+With a valid token, the rate limit increases to **5000 requests/hour**.
+
+## Example
+
+```
+$ python gitbeam.py octocat
+
+02:29:03 [INFO] 🔓 No token set — operating anonymously (60 req/hour).
+02:29:03 [INFO] 🔍 Fetching data for 'octocat'...
+
+───────────────── 👤 The Octocat  —  @octocat ──────────────────
+ 📝 Bio:            │ —                          
+ 🏢 Company:        │ @github                    
+ 📍 Location:       │ San Francisco              
+ 📦 Public repos:   │ 8                          
+ 👥 Followers:      │ 22755                      
+ 🔗 Profile:        │ https://github.com/octocat 
+────────────────────────────────────────────────────────────────
+
 ```
 
 ## Requirements
 
 - Python 3.10 or newer
-- `requests` (installed automatically via `requirements.txt`)
+- See `requirements.txt` for Python dependencies
 
 ## License
 
