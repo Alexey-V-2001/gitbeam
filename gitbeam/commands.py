@@ -2,15 +2,15 @@
 
 import logging
 import sys
-from typing import Optional
 
-from gitbeam import api, auth, cache, display
+from gitbeam import auth, cache, display
+from gitbeam.api import GitHubClient
 
 logger = logging.getLogger("gitbeam")
 
 
 def cmd_auth_status() -> None:
-    """Handle 'auth status' command."""
+    """Handle 'auth status' — validate the GitHub token."""
     token = auth.get_token()
     if not token:
         display.print_error("No token configured.")
@@ -18,7 +18,8 @@ def cmd_auth_status() -> None:
         display.print_error("Then set: export GITHUB_TOKEN=ghp_...")
         sys.exit(1)
 
-    if api.validate_token(token):
+    client = GitHubClient(token=token)
+    if client.validate_token():
         display.print_success("Token is valid.")
         sys.exit(0)
     else:
@@ -27,84 +28,88 @@ def cmd_auth_status() -> None:
 
 
 def cmd_user(username: str, no_cache: bool = False) -> None:
-    """Handle the default command: fetch and display a user profile."""
+    """Fetch and display a GitHub user profile."""
     token = auth.get_token()
+    client = GitHubClient(token=token)
 
     if no_cache:
         cache.clear_cache_for(f"user:{username}")
 
-    cached_data = cache.get_cached(f"user:{username}")
-    if cached_data:
-        display.display_user(cached_data)
+    cached = cache.get_cached(f"user:{username}")
+    if cached:
+        display.display_user(cached)
         return
 
     logger.info("Fetching data for '%s'...", username)
-    user_data = api.get_user_info(username, token)
-    if user_data is None:
+    data = client.get_user_info(username)
+    if data is None:
         sys.exit(1)
 
-    cache.set_cached(f"user:{username}", user_data)
-    display.display_user(user_data)
+    cache.set_cached(f"user:{username}", data)
+    display.display_user(data)
 
 
 def cmd_repos(username: str, no_cache: bool = False) -> None:
-    """Handle 'repos' subcommand."""
+    """Fetch and display top repositories."""
     token = auth.get_token()
+    client = GitHubClient(token=token)
 
     if no_cache:
         cache.clear_cache_for(f"repos:{username}")
 
-    cached_data = cache.get_cached(f"repos:{username}")
-    if cached_data:
-        display.display_repos(cached_data)
+    cached = cache.get_cached(f"repos:{username}")
+    if cached:
+        display.display_repos(cached)
         return
 
     logger.info("Fetching repos for '%s'...", username)
-    repos = api.get_repos(username, token)
-    if repos is None:
+    data = client.get_repos(username)
+    if data is None:
         sys.exit(1)
 
-    cache.set_cached(f"repos:{username}", repos)
-    display.display_repos(repos)
+    cache.set_cached(f"repos:{username}", data)
+    display.display_repos(data)
 
 
 def cmd_events(username: str, no_cache: bool = False) -> None:
-    """Handle 'events' subcommand."""
+    """Fetch and display recent public events."""
     token = auth.get_token()
+    client = GitHubClient(token=token)
 
     if no_cache:
         cache.clear_cache_for(f"events:{username}")
 
-    cached_data = cache.get_cached(f"events:{username}")
-    if cached_data:
-        display.display_events(cached_data)
+    cached = cache.get_cached(f"events:{username}")
+    if cached:
+        display.display_events(cached)
         return
 
     logger.info("Fetching events for '%s'...", username)
-    events = api.get_events(username, token)
-    if events is None:
+    data = client.get_events(username)
+    if data is None:
         sys.exit(1)
 
-    cache.set_cached(f"events:{username}", events)
-    display.display_events(events)
+    cache.set_cached(f"events:{username}", data)
+    display.display_events(data)
 
 
 def cmd_followers(username: str, no_cache: bool = False) -> None:
-    """Handle 'followers' subcommand."""
+    """Fetch and display followers."""
     token = auth.get_token()
+    client = GitHubClient(token=token)
 
     if no_cache:
         cache.clear_cache_for(f"followers:{username}")
 
-    cached_data = cache.get_cached(f"followers:{username}")
-    if cached_data:
-        display.display_followers(cached_data)
+    cached = cache.get_cached(f"followers:{username}")
+    if cached:
+        display.display_followers(cached)
         return
 
     logger.info("Fetching followers for '%s'...", username)
-    followers = api.get_followers(username, token)
-    if followers is None:
+    data = client.get_followers(username)
+    if data is None:
         sys.exit(1)
 
-    cache.set_cached(f"followers:{username}", followers)
-    display.display_followers(followers)
+    cache.set_cached(f"followers:{username}", data)
+    display.display_followers(data)
