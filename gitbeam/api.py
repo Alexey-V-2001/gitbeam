@@ -6,7 +6,7 @@ from typing import Optional
 import requests
 
 API_BASE = "https://api.github.com"
-USER_AGENT = "gitbeam/0.2.0"
+USER_AGENT = "gitbeam/0.3.0"
 REQUEST_TIMEOUT = 10
 
 logger = logging.getLogger("gitbeam")
