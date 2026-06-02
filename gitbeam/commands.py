@@ -87,3 +87,24 @@ def cmd_events(username: str, no_cache: bool = False) -> None:
 
     cache.set_cached(f"events:{username}", events)
     display.display_events(events)
+
+
+def cmd_followers(username: str, no_cache: bool = False) -> None:
+    """Handle 'followers' subcommand."""
+    token = auth.get_token()
+
+    if no_cache:
+        cache.clear_cache_for(f"followers:{username}")
+
+    cached_data = cache.get_cached(f"followers:{username}")
+    if cached_data:
+        display.display_followers(cached_data)
+        return
+
+    logger.info("Fetching followers for '%s'...", username)
+    followers = api.get_followers(username, token)
+    if followers is None:
+        sys.exit(1)
+
+    cache.set_cached(f"followers:{username}", followers)
+    display.display_followers(followers)

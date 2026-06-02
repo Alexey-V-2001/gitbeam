@@ -72,6 +72,18 @@ def get_events(username: str, token: Optional[str] = None) -> Optional[list]:
     return _handle_response(resp, context=f"events for '{username}'")
 
 
+def get_followers(username: str, token: Optional[str] = None) -> Optional[list]:
+    """Fetch list of followers for a user."""
+    url = f"{API_BASE}/users/{username}/followers?per_page=100"
+    headers = _build_headers(token)
+    try:
+        resp = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.RequestException as e:
+        logger.error("Network error: %s", e)
+        return None
+    return _handle_response(resp, context=f"followers for '{username}'")
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -85,9 +97,15 @@ def _build_headers(token: Optional[str]) -> dict:
 
 def _handle_response(resp: requests.Response, context: str = "") -> Optional[dict]:
     """Interpret API response, log errors, return data or None."""
+    # Check rate limit headers and warn if low
     remaining = resp.headers.get("X-RateLimit-Remaining")
-    if remaining is not None and int(remaining) < 10:
-        logger.warning("Only %s requests left! Limit resets in ~1 hour.", remaining)
+    limit = resp.headers.get("X-RateLimit-Limit")
+    if remaining is not None:
+        remaining_int = int(remaining)
+        if limit is not None:
+            logger.info("Rate limit: %s/%s remaining.", remaining_int, limit)
+        if remaining_int < 10:
+            logger.warning("Only %s requests left! Limit resets in ~1 hour.", remaining_int)
 
     if resp.status_code == 200:
         return resp.json()

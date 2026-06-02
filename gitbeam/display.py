@@ -51,7 +51,7 @@ def display_repos(repos: list) -> None:
 
 def display_events(events: list) -> None:
     """Display recent events as a Rich table."""
-    table = Table(title="Recent Events", show_edge=False, padding=(0, 1))
+    table = Table(title="Recent Events", padding=(0, 1))
     table.add_column("Type", style="bold yellow", width=18)
     table.add_column("Repo", style="cyan")
     table.add_column("Details")
@@ -61,6 +61,34 @@ def display_events(events: list) -> None:
         repo_name = event.get("repo", {}).get("name", "—")
         detail = _event_detail(event)
         table.add_row(etype, repo_name, detail)
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
+def display_followers(followers: list) -> None:
+    """Display followers as a Rich table with borders."""
+    if not followers:
+        console.print("No followers found.", style="dim")
+        return
+
+    table = Table(
+        title=f"Followers (showing {len(followers)})",
+        show_edge=True,
+        padding=(0, 1),
+    )
+    table.add_column("#", style="dim", width=4, justify="right")
+    table.add_column("Login", style="bold cyan")
+    table.add_column("Profile", style="dim")
+
+    for i, follower in enumerate(followers, start=1):
+        login = follower.get("login", "")
+        table.add_row(
+            str(i),
+            login,
+            f"https://github.com/{login}",
+        )
 
     console.print()
     console.print(table)
