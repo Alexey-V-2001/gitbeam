@@ -14,6 +14,7 @@ from rich.traceback import install as install_rich_traceback
 
 from gitbeam.commands import cmd_auth_status, cmd_events, cmd_followers, cmd_repos, cmd_user
 from gitbeam.security import TokenFilter, scrub_token
+from gitbeam.validation import validate_username
 
 # ---------------------------------------------------------------------------
 # Safety: prevent token leakage in logs and tracebacks
@@ -72,30 +73,30 @@ def main() -> None:
             cmd_auth_status()
             return
 
+        username = sys.argv[1]
+        validate_username(username)
+        no_cache = "--no-cache" in sys.argv
+
+        if len(sys.argv) > 2 and sys.argv[2] == "repos":
+            cmd_repos(username, no_cache)
+            return
+
         # repos command
         if len(sys.argv) > 2 and sys.argv[2] == "repos":
-            username = sys.argv[1]
-            no_cache = "--no-cache" in sys.argv
             cmd_repos(username, no_cache)
             return
 
         # events command
         if len(sys.argv) > 2 and sys.argv[2] == "events":
-            username = sys.argv[1]
-            no_cache = "--no-cache" in sys.argv
             cmd_events(username, no_cache)
             return
 
         # followers command
         if len(sys.argv) > 2 and sys.argv[2] == "followers":
-            username = sys.argv[1]
-            no_cache = "--no-cache" in sys.argv
             cmd_followers(username, no_cache)
             return
 
         # default: user lookup
-        username = sys.argv[1]
-        no_cache = "--no-cache" in sys.argv
         cmd_user(username, no_cache)
 
     except KeyboardInterrupt:
