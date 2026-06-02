@@ -10,9 +10,38 @@ import logging
 import os
 import sys
 
-from gitbeam.commands import cmd_auth_status, cmd_user, cmd_repos, cmd_events, cmd_followers
+from rich.traceback import install as install_rich_traceback
 
-# Set up logging early (before any other module touches it).
+from gitbeam.commands import cmd_auth_status, cmd_events, cmd_followers, cmd_repos, cmd_user
+from gitbeam.security import TokenFilter, scrub_token
+
+# ---------------------------------------------------------------------------
+# Safety: prevent token leakage in logs and tracebacks
+# ---------------------------------------------------------------------------
+
+# 1. Scrub tokens from all log messages
+logging.getLogger().addFilter(TokenFilter())
+
+# 2. Rich traceback without local variables (they may contain the token)
+install_rich_traceback(show_locals=False, width=100)
+
+# 3. Last-resort safety net: scrub the traceback before printing
+_original_excepthook = sys.excepthook
+
+
+def _scrubbed_excepthook(exc_type, exc_value, exc_tb) -> None:
+    """Wrap excepthook to scrub any token that may have leaked."""
+    if exc_value is not None:
+        exc_value = exc_type(scrub_token(str(exc_value)))
+    _original_excepthook(exc_type, exc_value, exc_tb)
+
+
+sys.excepthook = _scrubbed_excepthook
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
 logging.basicConfig(
     level=os.getenv("GITBEAM_LOG_LEVEL", "INFO"),
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -33,40 +62,48 @@ def print_usage() -> None:
 
 
 def main() -> None:
-    if len(sys.argv) < 2:
-        print_usage()
-        sys.exit(1)
+    try:
+        if len(sys.argv) < 2:
+            print_usage()
+            sys.exit(1)
 
-    # auth status command
-    if sys.argv[1] == "auth" and len(sys.argv) > 2 and sys.argv[2] == "status":
-        cmd_auth_status()
-        return
-    
-    # repos command
-    if len(sys.argv) > 2 and sys.argv[2] == "repos":
+        # auth status command
+        if sys.argv[1] == "auth" and len(sys.argv) > 2 and sys.argv[2] == "status":
+            cmd_auth_status()
+            return
+
+        # repos command
+        if len(sys.argv) > 2 and sys.argv[2] == "repos":
+            username = sys.argv[1]
+            no_cache = "--no-cache" in sys.argv
+            cmd_repos(username, no_cache)
+            return
+
+        # events command
+        if len(sys.argv) > 2 and sys.argv[2] == "events":
+            username = sys.argv[1]
+            no_cache = "--no-cache" in sys.argv
+            cmd_events(username, no_cache)
+            return
+
+        # followers command
+        if len(sys.argv) > 2 and sys.argv[2] == "followers":
+            username = sys.argv[1]
+            no_cache = "--no-cache" in sys.argv
+            cmd_followers(username, no_cache)
+            return
+
+        # default: user lookup
         username = sys.argv[1]
         no_cache = "--no-cache" in sys.argv
-        cmd_repos(username, no_cache)
-        return
+        cmd_user(username, no_cache)
 
-    # events command
-    if len(sys.argv) > 2 and sys.argv[2] == "events":
-        username = sys.argv[1]
-        no_cache = "--no-cache" in sys.argv
-        cmd_events(username, no_cache)
-        return
-    
-    # followers command
-    if len(sys.argv) > 2 and sys.argv[2] == "followers":
-        username = sys.argv[1]
-        no_cache = "--no-cache" in sys.argv
-        cmd_followers(username, no_cache)
-        return
-
-    # default: user lookup
-    username = sys.argv[1]
-    no_cache = "--no-cache" in sys.argv
-    cmd_user(username, no_cache)
+    except KeyboardInterrupt:
+        print("", file=sys.stderr)
+        sys.exit(130)
+    except BrokenPipeError:
+        # Silently exit when piped to head/less
+        pass
 
 
 if __name__ == "__main__":
