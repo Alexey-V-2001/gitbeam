@@ -45,3 +45,24 @@ def cmd_user(username: str, no_cache: bool = False) -> None:
 
     cache.set_cached(f"user:{username}", user_data)
     display.display_user(user_data)
+
+
+def cmd_repos(username: str, no_cache: bool = False) -> None:
+    """Handle 'repos' subcommand."""
+    token = auth.get_token()
+
+    if no_cache:
+        cache.clear_cache_for(f"repos:{username}")
+
+    cached_data = cache.get_cached(f"repos:{username}")
+    if cached_data:
+        display.display_repos(cached_data)
+        return
+
+    logger.info("Fetching repos for '%s'...", username)
+    repos = api.get_repos(username, token)
+    if repos is None:
+        sys.exit(1)
+
+    cache.set_cached(f"repos:{username}", repos)
+    display.display_repos(repos)

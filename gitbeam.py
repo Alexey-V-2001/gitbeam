@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 
-from gitbeam.commands import cmd_auth_status, cmd_user
+from gitbeam.commands import cmd_auth_status, cmd_user, cmd_repos
 
 # Set up logging early (before any other module touches it).
 logging.basicConfig(
@@ -40,6 +40,13 @@ def main() -> None:
     # auth status command
     if sys.argv[1] == "auth" and len(sys.argv) > 2 and sys.argv[2] == "status":
         cmd_auth_status()
+        return
+    
+    # repos command
+    if len(sys.argv) > 2 and sys.argv[2] == "repos":
+        username = sys.argv[1]
+        no_cache = "--no-cache" in sys.argv
+        cmd_repos(username, no_cache)
         return
 
     # default: user lookup

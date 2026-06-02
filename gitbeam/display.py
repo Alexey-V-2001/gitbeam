@@ -26,6 +26,29 @@ def display_user(data: dict) -> None:
     console.print()
 
 
+def display_repos(repos: list) -> None:
+    """Display top repositories as a Rich table."""
+    table = Table(title="Top Repositories", show_edge=False, padding=(0, 1))
+    table.add_column("#", style="dim", width=3, justify="right")
+    table.add_column("Name", style="bold cyan")
+    table.add_column("Stars", justify="right")
+    table.add_column("Language")
+    table.add_column("Description")
+
+    for i, repo in enumerate(repos[:5], start=1):
+        table.add_row(
+            str(i),
+            repo.get("name", ""),
+            str(repo.get("stargazers_count", 0)),
+            repo.get("language") or "—",
+            (repo.get("description") or "—")[:60],
+        )
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
 def print_error(message: str) -> None:
     """Print an error message to stderr via Rich (styled red)."""
     console.print(message, style="red")

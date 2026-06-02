@@ -48,6 +48,18 @@ def validate_token(token: str) -> bool:
         return False
 
 
+def get_repos(username: str, token: Optional[str] = None) -> Optional[list]:
+    """Fetch repositories for a user, sorted by stars descending."""
+    url = f"{API_BASE}/users/{username}/repos?sort=stars&direction=desc&per_page=100"
+    headers = _build_headers(token)
+    try:
+        resp = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.RequestException as e:
+        logger.error("Network error: %s", e)
+        return None
+    return _handle_response(resp, context=f"repos for '{username}'")
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
