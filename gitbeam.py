@@ -2,10 +2,14 @@
 gitbeam — CLI GitHub profile inspector.
 
 Usage:
-    python gitbeam.py <username> [--no-cache]
+    python gitbeam.py user <username> [--no-cache]
+    python gitbeam.py repos <username> [--no-cache]
+    python gitbeam.py events <username> [--no-cache]
+    python gitbeam.py followers <username> [--no-cache]
     python gitbeam.py auth status
 """
 
+import argparse
 import logging
 import os
 import sys
@@ -48,47 +52,79 @@ logging.basicConfig(
 )
 
 
-def print_usage() -> None:
-    print("Usage:")
-    print("  python gitbeam.py <username> [--no-cache]")
-    print("  python gitbeam.py auth status")
-    print()
-    print("Examples:")
-    print("  python gitbeam.py torvalds")
-    print("  python gitbeam.py octocat --no-cache")
-    print("  python gitbeam.py auth status")
+def _build_parser() -> argparse.ArgumentParser:
+    """Construct the argument parser with all subcommands."""
+    parser = argparse.ArgumentParser(
+        prog="gitbeam",
+        description="CLI GitHub profile inspector",
+    )
+    parser.add_argument(
+        "--version", action="version", version="gitbeam 0.3.12"
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    # auth status
+    auth_parser = sub.add_parser("auth", help="Manage authentication")
+    auth_sub = auth_parser.add_subparsers(dest="auth_command")
+    auth_sub.add_parser("status", help="Check token validity")
+
+    # user
+    user_parser = sub.add_parser("user", help="Show user profile")
+    user_parser.add_argument("username")
+    user_parser.add_argument("--no-cache", action="store_true")
+
+    # repos
+    repos_parser = sub.add_parser("repos", help="Show top repositories")
+    repos_parser.add_argument("username")
+    repos_parser.add_argument("--no-cache", action="store_true")
+
+    # events
+    events_parser = sub.add_parser("events", help="Show recent events")
+    events_parser.add_argument("username")
+    events_parser.add_argument("--no-cache", action="store_true")
+
+    # followers
+    followers_parser = sub.add_parser("followers", help="Show followers")
+    followers_parser.add_argument("username")
+    followers_parser.add_argument("--no-cache", action="store_true")
+
+    return parser
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Entry point. Parse args, dispatch to command handlers, return exit code."""
+    parser = _build_parser()
+
     try:
-        args = argv if argv is not None else sys.argv[1:]
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        # argparse calls sys.exit on --help or parse errors
+        return e.code if isinstance(e.code, int) else 1
 
-        if len(args) < 1:
-            print_usage()
+    try:
+        if args.command == "auth":
+            if args.auth_command == "status":
+                cmd_auth_status()
+                return 0
+            parser.print_help()
             return 1
+        else:
+            username = args.username
+            validate_username(username)
+            no_cache = args.no_cache
 
-        if args[0] == "auth" and len(args) > 1 and args[1] == "status":
-            cmd_auth_status()
-            return 0
+            if args.command == "user":
+                cmd_user(username, no_cache)
+            elif args.command == "repos":
+                cmd_repos(username, no_cache)
+            elif args.command == "events":
+                cmd_events(username, no_cache)
+            elif args.command == "followers":
+                cmd_followers(username, no_cache)
+            else:
+                parser.print_help()
+                return 1
 
-        username = args[0]
-        validate_username(username)
-        no_cache = "--no-cache" in args
-
-        if len(args) > 1 and args[1] == "repos":
-            cmd_repos(username, no_cache)
-            return 0
-
-        if len(args) > 1 and args[1] == "events":
-            cmd_events(username, no_cache)
-            return 0
-
-        if len(args) > 1 and args[1] == "followers":
-            cmd_followers(username, no_cache)
-            return 0
-
-        cmd_user(username, no_cache)
         return 0
 
     except KeyboardInterrupt:
