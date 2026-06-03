@@ -21,6 +21,8 @@ from gitbeam.commands import cmd_auth_status, cmd_events, cmd_followers, cmd_rep
 from gitbeam.security import TokenFilter, scrub_token
 from gitbeam.validation import validate_username
 
+from gitbeam import __version__
+
 # ---------------------------------------------------------------------------
 # Safety: prevent token leakage in logs and tracebacks
 # ---------------------------------------------------------------------------
@@ -59,7 +61,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="CLI GitHub profile inspector",
     )
     parser.add_argument(
-        "--version", action="version", version="gitbeam 0.3.12"
+        "--version", action="version", version=f"gitbeam {__version__}"
     )
     sub = parser.add_subparsers(dest="command")
 

@@ -9,10 +9,12 @@ from urllib3.util import Retry
 from urllib.parse import quote as url_quote
 from urllib.parse import urlparse as url_parse
 
+from gitbeam import __version__ as GITBEAM_VERSION
+
 logger = logging.getLogger("gitbeam")
 
 API_BASE = "https://api.github.com"
-USER_AGENT = "gitbeam/0.3.12"
+USER_AGENT = f"gitbeam/{GITBEAM_VERSION}"
 REQUEST_TIMEOUT = (3.05, 15)  # (connect, read)
 
 
