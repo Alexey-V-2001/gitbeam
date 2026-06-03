@@ -2,6 +2,8 @@
 
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -16,10 +18,16 @@ CACHE_TTL = 300  # 5 minutes
 
 
 def _ensure_cache_dir() -> None:
+    """Create the cache directory with 0o700 permissions."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(CACHE_DIR, 0o700)
+    except OSError:
+        pass  # Windows — no-op
 
 
 def _read_cache() -> dict:
+    """Read and parse the cache file. Empty dict on any failure."""
     if not CACHE_FILE.exists():
         return {}
     try:
@@ -30,10 +38,25 @@ def _read_cache() -> dict:
 
 
 def _write_cache(cache: dict) -> None:
+    """Atomically write the cache file with 0o600 permissions.
+
+    Writes to a temp file in the same directory, chmods it,
+    then atomically renames it over the target file.
+    """
     _ensure_cache_dir()
-    CACHE_FILE.write_text(
-        json.dumps(cache, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    fd, tmp_path = tempfile.mkstemp(dir=str(CACHE_DIR), suffix=".json")
+    try:
+        os.chmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(cache, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_path, str(CACHE_FILE))
+    except Exception:
+        # Clean up the temp file on any failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def get_cached(key: str) -> Optional[dict]:
