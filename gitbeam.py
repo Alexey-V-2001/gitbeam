@@ -9,6 +9,7 @@ Usage:
 import logging
 import os
 import sys
+from typing import Optional
 
 from rich.traceback import install as install_rich_traceback
 
@@ -20,18 +21,14 @@ from gitbeam.validation import validate_username
 # Safety: prevent token leakage in logs and tracebacks
 # ---------------------------------------------------------------------------
 
-# 1. Scrub tokens from all log messages
 logging.getLogger().addFilter(TokenFilter())
 
-# 2. Rich traceback without local variables (they may contain the token)
 install_rich_traceback(show_locals=False, width=100)
 
-# 3. Last-resort safety net: scrub the traceback before printing
 _original_excepthook = sys.excepthook
 
 
 def _scrubbed_excepthook(exc_type, exc_value, exc_tb) -> None:
-    """Wrap excepthook to scrub any token that may have leaked."""
     if exc_value is not None:
         exc_value = exc_type(scrub_token(str(exc_value)))
     _original_excepthook(exc_type, exc_value, exc_tb)
@@ -62,46 +59,44 @@ def print_usage() -> None:
     print("  python gitbeam.py auth status")
 
 
-def main() -> None:
+def main(argv: Optional[list[str]] = None) -> int:
+    """Entry point. Parse args, dispatch to command handlers, return exit code."""
     try:
-        if len(sys.argv) < 2:
+        args = argv if argv is not None else sys.argv[1:]
+
+        if len(args) < 1:
             print_usage()
-            sys.exit(1)
+            return 1
 
-        # auth status command
-        if sys.argv[1] == "auth" and len(sys.argv) > 2 and sys.argv[2] == "status":
+        if args[0] == "auth" and len(args) > 1 and args[1] == "status":
             cmd_auth_status()
-            return
+            return 0
 
-        username = sys.argv[1]
+        username = args[0]
         validate_username(username)
-        no_cache = "--no-cache" in sys.argv
+        no_cache = "--no-cache" in args
 
-        # repos command
-        if len(sys.argv) > 2 and sys.argv[2] == "repos":
+        if len(args) > 1 and args[1] == "repos":
             cmd_repos(username, no_cache)
-            return
+            return 0
 
-        # events command
-        if len(sys.argv) > 2 and sys.argv[2] == "events":
+        if len(args) > 1 and args[1] == "events":
             cmd_events(username, no_cache)
-            return
+            return 0
 
-        # followers command
-        if len(sys.argv) > 2 and sys.argv[2] == "followers":
+        if len(args) > 1 and args[1] == "followers":
             cmd_followers(username, no_cache)
-            return
+            return 0
 
-        # default: user lookup
         cmd_user(username, no_cache)
+        return 0
 
     except KeyboardInterrupt:
         print("", file=sys.stderr)
-        sys.exit(130)
+        return 130
     except BrokenPipeError:
-        # Silently exit when piped to head/less
-        pass
+        return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
