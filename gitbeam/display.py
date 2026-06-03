@@ -1,9 +1,26 @@
 """Rich-powered display functions for gitbeam."""
 
+import re
+
 from rich.console import Console
+from rich.markup import escape as rich_escape
 from rich.table import Table
 
 console = Console()
+
+# Control characters to strip (except \t, \n which are harmless in Rich tables)
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+def _sanitize(text: str, max_len: int = 200) -> str:
+    """Strip control chars, escape Rich markup, truncate to *max_len*."""
+    if not text:
+        return ""
+    text = _CONTROL_RE.sub("", str(text))
+    text = rich_escape(text)
+    if len(text) > max_len:
+        text = text[:max_len] + "..."
+    return text
 
 
 def display_user(data: dict) -> None:
@@ -12,9 +29,9 @@ def display_user(data: dict) -> None:
     table.add_column(style="bold cyan", width=18)
     table.add_column()
 
-    table.add_row("Bio:", data.get("bio") or "—")
-    table.add_row("Company:", data.get("company") or "—")
-    table.add_row("Location:", data.get("location") or "—")
+    table.add_row("Bio:", _sanitize(data.get("bio") or "—", max_len=300))
+    table.add_row("Company:", _sanitize(data.get("company") or "—"))
+    table.add_row("Location:", _sanitize(data.get("location") or "—"))
     table.add_row("Public repos:", str(data.get("public_repos", 0)))
     table.add_row("Followers:", str(data.get("followers", 0)))
     table.add_row("Profile:", f"https://github.com/{data.get('login')}")
@@ -38,10 +55,10 @@ def display_repos(repos: list) -> None:
     for i, repo in enumerate(repos[:5], start=1):
         table.add_row(
             str(i),
-            repo.get("name", ""),
+            _sanitize(repo.get("name", ""), max_len=80),
             str(repo.get("stargazers_count", 0)),
-            repo.get("language") or "—",
-            (repo.get("description") or "—")[:60],
+            _sanitize(repo.get("language") or "—", max_len=30),
+            _sanitize(repo.get("description") or "—", max_len=60),
         )
 
     console.print()
@@ -54,7 +71,7 @@ def display_events(events: list) -> None:
     if not events:
         console.print("No events found.", style="dim")
         return
-    
+
     table = Table(title="Recent Events", padding=(0, 1))
     table.add_column("Type", style="bold yellow", width=18)
     table.add_column("Repo", style="cyan")
