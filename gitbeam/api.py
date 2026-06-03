@@ -12,7 +12,7 @@ from urllib.parse import urlparse as url_parse
 logger = logging.getLogger("gitbeam")
 
 API_BASE = "https://api.github.com"
-USER_AGENT = "gitbeam/0.3.9"
+USER_AGENT = "gitbeam/0.3.10"
 REQUEST_TIMEOUT = (3.05, 15)  # (connect, read)
 
 

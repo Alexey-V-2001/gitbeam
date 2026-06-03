@@ -79,8 +79,8 @@ def display_events(events: list) -> None:
 
     for event in events[:10]:
         etype = event.get("type", "").replace("Event", "")
-        repo_name = event.get("repo", {}).get("name", "—")
-        detail = _event_detail(event)
+        repo_name = _sanitize(event.get("repo", {}).get("name", "—"), max_len=60)
+        detail = _sanitize(_event_detail(event), max_len=200)
         table.add_row(etype, repo_name, detail)
 
     console.print()
@@ -104,7 +104,7 @@ def display_followers(followers: list) -> None:
     table.add_column("Profile", style="dim")
 
     for i, follower in enumerate(followers, start=1):
-        login = follower.get("login", "")
+        login = _sanitize(follower.get("login", ""), max_len=39)
         table.add_row(
             str(i),
             login,
