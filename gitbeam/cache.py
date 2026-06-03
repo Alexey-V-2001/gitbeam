@@ -6,9 +6,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from platformdirs import user_cache_dir
+
 logger = logging.getLogger("gitbeam")
 
-CACHE_DIR = Path.home() / ".cache" / "gitbeam"
+CACHE_DIR = Path(user_cache_dir("gitbeam"))
 CACHE_FILE = CACHE_DIR / "cache.json"
 CACHE_TTL = 300  # 5 minutes
 
