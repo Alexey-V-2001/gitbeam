@@ -77,10 +77,6 @@ def main() -> None:
         validate_username(username)
         no_cache = "--no-cache" in sys.argv
 
-        if len(sys.argv) > 2 and sys.argv[2] == "repos":
-            cmd_repos(username, no_cache)
-            return
-
         # repos command
         if len(sys.argv) > 2 and sys.argv[2] == "repos":
             cmd_repos(username, no_cache)
