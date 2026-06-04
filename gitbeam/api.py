@@ -1,13 +1,13 @@
 """GitHub REST API client with retry, timeout, and rate-limit handling."""
 
 import logging
-from typing import Optional
+from typing import Any, cast
+from urllib.parse import quote as url_quote
+from urllib.parse import urlparse as url_parse
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from urllib.parse import quote as url_quote
-from urllib.parse import urlparse as url_parse
 
 from gitbeam import __version__ as GITBEAM_VERSION
 
@@ -31,9 +31,9 @@ class GitHubClient:
 
     def __init__(
         self,
-        token: Optional[str] = None,
+        token: str | None = None,
         base_url: str = API_BASE,
-        session: Optional[requests.Session] = None,
+        session: requests.Session | None = None,
     ) -> None:
         self._token = token
         self._base_url = base_url.rstrip("/")
@@ -41,22 +41,22 @@ class GitHubClient:
 
     # -- public methods --------------------------------------------------
 
-    def get_user_info(self, username: str) -> Optional[dict]:
+    def get_user_info(self, username: str) -> dict | None:
         quoted = url_quote(username, safe="")
-        return self._request("GET", f"/users/{quoted}")
+        return cast("dict | None", self._request("GET", f"/users/{quoted}"))
 
-    def get_repos(self, username: str) -> Optional[list]:
+    def get_repos(self, username: str) -> list | None:
         quoted = url_quote(username, safe="")
         path = f"/users/{quoted}/repos?sort=stars&direction=desc&per_page=100"
-        return self._request("GET", path)
+        return cast("list | None", self._request("GET", path))
 
-    def get_events(self, username: str) -> Optional[list]:
+    def get_events(self, username: str) -> list | None:
         quoted = url_quote(username, safe="")
-        return self._request("GET", f"/users/{quoted}/events?per_page=10")
+        return cast("list | None", self._request("GET", f"/users/{quoted}/events?per_page=10"))
 
-    def get_followers(self, username: str) -> Optional[list]:
+    def get_followers(self, username: str) -> list | None:
         quoted = url_quote(username, safe="")
-        return self._request("GET", f"/users/{quoted}/followers?per_page=100")
+        return cast("list | None", self._request("GET", f"/users/{quoted}/followers?per_page=100"))
 
     def validate_token(self) -> bool:
         """Validate the stored token via GET /rate_limit."""
@@ -100,7 +100,7 @@ class GitHubClient:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
 
-    def _request(self, method: str, path: str) -> Optional[dict]:
+    def _request(self, method: str, path: str) -> Any:
         url = f"{self._base_url}{path}"
 
         # Verify the final URL still points to api.github.com (SSRF guard)
@@ -122,7 +122,7 @@ class GitHubClient:
             return None
         return self._handle_response(resp)
 
-    def _handle_response(self, resp: requests.Response) -> Optional[dict]:
+    def _handle_response(self, resp: requests.Response) -> Any:
         """Map status code -> log message; return JSON or None."""
         self._log_rate_limit(resp)
 

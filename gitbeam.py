@@ -13,15 +13,13 @@ import argparse
 import logging
 import os
 import sys
-from typing import Optional
 
 from rich.traceback import install as install_rich_traceback
 
+from gitbeam import __version__
 from gitbeam.commands import cmd_auth_status, cmd_events, cmd_followers, cmd_repos, cmd_user
 from gitbeam.security import TokenFilter, scrub_token
 from gitbeam.validation import validate_username
-
-from gitbeam import __version__
 
 # ---------------------------------------------------------------------------
 # Safety: prevent token leakage in logs and tracebacks
@@ -60,9 +58,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="gitbeam",
         description="CLI GitHub profile inspector",
     )
-    parser.add_argument(
-        "--version", action="version", version=f"gitbeam {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"gitbeam {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     # auth status
@@ -93,7 +89,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Entry point. Parse args, dispatch to command handlers, return exit code."""
     parser = _build_parser()
 

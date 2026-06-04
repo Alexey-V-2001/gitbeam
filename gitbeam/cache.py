@@ -4,9 +4,10 @@ import json
 import logging
 import os
 import tempfile
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Any, cast
 
 from platformdirs import user_cache_dir
 
@@ -20,29 +21,23 @@ CACHE_TTL = 300  # 5 minutes
 def _ensure_cache_dir() -> None:
     """Create the cache directory with 0o700 permissions."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    try:
+    with suppress(OSError):
         os.chmod(CACHE_DIR, 0o700)
-    except OSError:
-        pass  # Windows — no-op
 
 
-def _read_cache() -> dict:
+def _read_cache() -> Any:
     """Read and parse the cache file. Empty dict on any failure."""
     if not CACHE_FILE.exists():
         return {}
     try:
         return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         logger.warning("Cache corrupted, ignoring: %s", e)
         return {}
 
 
 def _write_cache(cache: dict) -> None:
-    """Atomically write the cache file with 0o600 permissions.
-
-    Writes to a temp file in the same directory, chmods it,
-    then atomically renames it over the target file.
-    """
+    """Atomically write the cache file with 0o600 permissions."""
     _ensure_cache_dir()
     fd, tmp_path = tempfile.mkstemp(dir=str(CACHE_DIR), suffix=".json")
     try:
@@ -51,15 +46,12 @@ def _write_cache(cache: dict) -> None:
             json.dump(cache, f, indent=2, ensure_ascii=False)
         os.replace(tmp_path, str(CACHE_FILE))
     except Exception:
-        # Clean up the temp file on any failure
-        try:
+        with suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
         raise
 
 
-def get_cached(key: str) -> Optional[dict]:
+def get_cached(key: str) -> Any:
     """Return cached data if fresh, otherwise None."""
     entry = _read_cache().get(key)
     if not entry:
@@ -72,10 +64,10 @@ def get_cached(key: str) -> Optional[dict]:
         return None
 
     logger.info("Using cache for '%s' (age: %.0f s).", key, age)
-    return entry["data"]
+    return cast(dict, entry["data"])
 
 
-def set_cached(key: str, data: dict) -> None:
+def set_cached(key: str, data: Any) -> None:
     """Store data in cache under the given key."""
     cache = _read_cache()
     cache[key] = {

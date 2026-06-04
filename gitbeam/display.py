@@ -130,6 +130,7 @@ def print_success(message: str) -> None:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _event_detail(event: dict) -> str:
     """Extract a human-readable detail from an event payload."""
     payload = event.get("payload", {})

@@ -2,12 +2,11 @@
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger("gitbeam")
 
 
-def get_token() -> Optional[str]:
+def get_token() -> str | None:
     """Read GitHub token from environment variable."""
     token = os.getenv("GITHUB_TOKEN")
     if token:
