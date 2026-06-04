@@ -1,0 +1,27 @@
+target-version = "py310"
+
+line-length = 100
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (unused variables, undefined names, etc.)
+    "W",   # pycodestyle warnings
+    "I",   # isort (import order)
+    "UP",  # pyupgrade (upgrade syntax to newer Python versions)
+    "B",   # flake8-bugbear (common bugs)
+    "C4",  # flake8-comprehensions (simplify list/dict comprehensions)
+    "SIM", # flake8-simplify (simplify code)
+    "S",   # flake8-bandit (security checks)
+]
+
+ignore = [
+    "S101",   # use of assert — fine in tests and dev scripts
+    "SIM108", # use ternary operator — sometimes if/else is clearer
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is perfectly fine in test code
+
+[format]
+quote-style = "double"
