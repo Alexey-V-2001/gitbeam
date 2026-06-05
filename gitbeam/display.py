@@ -1,10 +1,13 @@
 """Rich-powered display functions for gitbeam."""
 
 import re
+from typing import Any
 
 from rich.console import Console
 from rich.markup import escape as rich_escape
 from rich.table import Table
+
+from gitbeam.types import GitHubEvent, GitHubFollower, GitHubRepo, GitHubUser
 
 console = Console()
 
@@ -23,7 +26,7 @@ def _sanitize(text: str, max_len: int = 200) -> str:
     return text
 
 
-def display_user(data: dict) -> None:
+def display_user(data: GitHubUser) -> None:
     """Pretty-print a GitHub user profile."""
     table = Table(show_header=False, show_edge=False, padding=(0, 1))
     table.add_column(style="bold cyan", width=18)
@@ -43,7 +46,7 @@ def display_user(data: dict) -> None:
     console.print()
 
 
-def display_repos(repos: list) -> None:
+def display_repos(repos: list[GitHubRepo]) -> None:
     """Display top repositories as a Rich table."""
     table = Table(title="Top Repositories", padding=(0, 1))
     table.add_column("#", style="dim", width=3, justify="right")
@@ -66,7 +69,7 @@ def display_repos(repos: list) -> None:
     console.print()
 
 
-def display_events(events: list) -> None:
+def display_events(events: list[GitHubEvent]) -> None:
     """Display recent events as a Rich table."""
     if not events:
         console.print("No events found.", style="dim")
@@ -88,7 +91,7 @@ def display_events(events: list) -> None:
     console.print()
 
 
-def display_followers(followers: list) -> None:
+def display_followers(followers: list[GitHubFollower]) -> None:
     """Display followers as a Rich table with borders."""
     if not followers:
         console.print("No followers found.", style="dim")
@@ -131,13 +134,13 @@ def print_success(message: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _event_detail(event: dict) -> str:
+def _event_detail(event: GitHubEvent) -> str:
     """Extract a human-readable detail from an event payload."""
-    payload = event.get("payload", {})
+    payload = event.get("payload") or {}
     etype = event.get("type", "")
 
     if etype == "PushEvent":
-        commits = payload.get("commits", [])
+        commits: list[dict[str, Any]] = payload.get("commits", [])
         return f"{len(commits)} commit(s)"
     elif etype == "IssuesEvent":
         action = payload.get("action", "")

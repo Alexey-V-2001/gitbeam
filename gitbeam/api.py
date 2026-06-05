@@ -10,6 +10,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 from gitbeam import __version__ as GITBEAM_VERSION
+from gitbeam.types import GitHubEvent, GitHubFollower, GitHubRepo, GitHubUser
 
 logger = logging.getLogger("gitbeam")
 
@@ -41,22 +42,24 @@ class GitHubClient:
 
     # -- public methods --------------------------------------------------
 
-    def get_user_info(self, username: str) -> dict | None:
+    def get_user_info(self, username: str) -> GitHubUser | None:
         quoted = url_quote(username, safe="")
-        return cast("dict | None", self._request("GET", f"/users/{quoted}"))
+        return cast("GitHubUser | None", self._request("GET", f"/users/{quoted}"))
 
-    def get_repos(self, username: str) -> list | None:
+    def get_repos(self, username: str) -> list[GitHubRepo] | None:
         quoted = url_quote(username, safe="")
         path = f"/users/{quoted}/repos?sort=stars&direction=desc&per_page=100"
-        return cast("list | None", self._request("GET", path))
+        return cast("list[GitHubRepo] | None", self._request("GET", path))
 
-    def get_events(self, username: str) -> list | None:
+    def get_events(self, username: str) -> list[GitHubEvent] | None:
         quoted = url_quote(username, safe="")
-        return cast("list | None", self._request("GET", f"/users/{quoted}/events?per_page=10"))
+        path = f"/users/{quoted}/events?per_page=10"
+        return cast("list[GitHubEvent] | None", self._request("GET", path))
 
-    def get_followers(self, username: str) -> list | None:
+    def get_followers(self, username: str) -> list[GitHubFollower] | None:
         quoted = url_quote(username, safe="")
-        return cast("list | None", self._request("GET", f"/users/{quoted}/followers?per_page=100"))
+        path = f"/users/{quoted}/followers?per_page=100"
+        return cast("list[GitHubFollower] | None", self._request("GET", path))
 
     def validate_token(self) -> bool:
         """Validate the stored token via GET /rate_limit."""
