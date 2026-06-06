@@ -96,8 +96,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
-        # argparse calls sys.exit on --help or parse errors
         return e.code if isinstance(e.code, int) else 1
+
+    if args.command is None:
+        parser.print_help()
+        return 2
 
     try:
         if args.command == "auth":
