@@ -57,9 +57,22 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="gitbeam",
         description="CLI GitHub profile inspector",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  gitbeam user octocat\n"
+            "  gitbeam repos octocat\n"
+            "  gitbeam events octocat --no-cache\n"
+            "  gitbeam followers octocat\n"
+            "  gitbeam auth status"
+        ),
     )
     parser.add_argument("--version", action="version", version=f"gitbeam {__version__}")
-    sub = parser.add_subparsers(dest="command")
+    sub = parser.add_subparsers(
+        dest="command",
+        title="Commands",
+        metavar="COMMAND",
+    )
 
     # auth status
     auth_parser = sub.add_parser("auth", help="Manage authentication")
