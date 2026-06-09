@@ -1,11 +1,11 @@
 """JSON cache layer for gitbeam."""
 
+import datetime as dt
 import json
 import logging
 import os
 import tempfile
 from contextlib import suppress
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
@@ -57,8 +57,8 @@ def get_cached(key: str) -> Any:
     if not entry:
         return None
 
-    cached_at = datetime.fromisoformat(entry["cached_at"])
-    age = (datetime.now(timezone.utc) - cached_at).total_seconds()
+    cached_at = dt.datetime.fromisoformat(entry["cached_at"])
+    age = (dt.datetime.now(dt.timezone.utc) - cached_at).total_seconds()
     if age > CACHE_TTL:
         logger.info("Cache for '%s' expired (%.0f s ago).", key, age)
         return None
@@ -72,7 +72,7 @@ def set_cached(key: str, data: Any) -> None:
     cache = _read_cache()
     cache[key] = {
         "data": data,
-        "cached_at": datetime.now(timezone.utc).isoformat(),
+        "cached_at": dt.datetime.now(dt.timezone.utc).isoformat(),
     }
     _write_cache(cache)
 
