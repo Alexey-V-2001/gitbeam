@@ -11,6 +11,8 @@ from typing import Any, cast
 
 from platformdirs import user_cache_dir
 
+from gitbeam.types import GitHubEvent, GitHubFollower, GitHubRepo, GitHubUser
+
 logger = logging.getLogger("gitbeam")
 
 CACHE_DIR = Path(user_cache_dir("gitbeam"))
@@ -84,3 +86,54 @@ def clear_cache_for(key: str) -> None:
         del cache[key]
         _write_cache(cache)
         logger.info("Cache cleared for '%s'.", key)
+
+
+# -- typed helpers (read / write / clear) --
+
+
+def get_cached_user(username_digest: str) -> GitHubUser | None:
+    return cast(GitHubUser | None, get_cached(f"user:{username_digest}"))
+
+
+def get_cached_repos(username_digest: str) -> list[GitHubRepo] | None:
+    return cast("list[GitHubRepo] | None", get_cached(f"repos:{username_digest}"))
+
+
+def get_cached_events(username_digest: str) -> list[GitHubEvent] | None:
+    return cast("list[GitHubEvent] | None", get_cached(f"events:{username_digest}"))
+
+
+def get_cached_followers(username_digest: str) -> list[GitHubFollower] | None:
+    return cast("list[GitHubFollower] | None", get_cached(f"followers:{username_digest}"))
+
+
+def set_cached_user(username_digest: str, data: GitHubUser) -> None:
+    set_cached(f"user:{username_digest}", data)
+
+
+def set_cached_repos(username_digest: str, data: list[GitHubRepo]) -> None:
+    set_cached(f"repos:{username_digest}", data)
+
+
+def set_cached_events(username_digest: str, data: list[GitHubEvent]) -> None:
+    set_cached(f"events:{username_digest}", data)
+
+
+def set_cached_followers(username_digest: str, data: list[GitHubFollower]) -> None:
+    set_cached(f"followers:{username_digest}", data)
+
+
+def clear_cached_user(username_digest: str) -> None:
+    clear_cache_for(f"user:{username_digest}")
+
+
+def clear_cached_repos(username_digest: str) -> None:
+    clear_cache_for(f"repos:{username_digest}")
+
+
+def clear_cached_events(username_digest: str) -> None:
+    clear_cache_for(f"events:{username_digest}")
+
+
+def clear_cached_followers(username_digest: str) -> None:
+    clear_cache_for(f"followers:{username_digest}")
